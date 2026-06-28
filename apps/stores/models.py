@@ -16,7 +16,7 @@ class Inventory(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['store', 'product'], name='unique_store_inventory') # 
+            models.UniqueConstraint(fields=['store', 'product'], name='unique_store_inventory')
         ]
 
     def __str__(self):
