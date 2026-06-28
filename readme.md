@@ -1,86 +1,115 @@
-````markdown
 # Aforro Store Management API
 
-A backend REST API built using **Django** and **Django REST Framework** for managing products, stores, inventory, and customer orders. This project was developed as part of a backend engineering assignment and demonstrates transactional order processing, search, Redis caching, asynchronous task processing, Docker, PostgreSQL, and automated testing.
+A backend REST API built with **Django** and **Django REST Framework** for managing products, stores, inventory, and customer orders. Developed as a backend engineering assignment, it demonstrates transactional order processing, search, Redis caching, asynchronous task processing, Docker, PostgreSQL, and automated testing.
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Docker](#docker)
+- [API Reference](#api-reference)
+- [Usage Examples](#usage-examples)
+- [Redis Caching](#redis-caching)
+- [Celery Background Tasks](#celery-background-tasks)
+- [Design Decisions](#design-decisions)
+- [Scalability Considerations](#scalability-considerations)
+- [Testing](#testing)
+- [Author](#author)
 
 ---
 
-# Features
+## Features
 
-- Product, Category, Store and Inventory Management
-- Transaction-safe Order Processing
-- Automatic Inventory Validation
-- Automatic Stock Deduction
-- Product Search with Multiple Filters
-- Product Autocomplete Suggestions
-- Pagination
-- Redis Response Caching
-- Celery Background Task Processing
-- Swagger / OpenAPI Documentation
-- Dockerized Development Environment
-- PostgreSQL Database
-- Dummy Data Generator
-- Automated API Tests
+| Category | Capabilities |
+|----------|--------------|
+| **Core** | Product, category, store, and inventory management |
+| **Orders** | Transaction-safe order processing with automatic inventory validation and stock deduction |
+| **Search** | Product search with multiple filters, autocomplete suggestions, and pagination |
+| **Performance** | Redis response caching and Celery background task processing |
+| **DevOps** | Dockerized development environment with PostgreSQL |
+| **Tooling** | Swagger / OpenAPI documentation, dummy data generator, automated API tests |
 
 ---
 
-# Tech Stack
+## Tech Stack
 
-- Python 3.12
-- Django
-- Django REST Framework
-- PostgreSQL
-- Redis
-- Celery
-- Docker & Docker Compose
-- drf-spectacular (Swagger / OpenAPI)
-- Faker
+| Layer | Technologies |
+|-------|--------------|
+| **Language** | Python 3.12 |
+| **Framework** | Django, Django REST Framework |
+| **Database** | PostgreSQL |
+| **Cache / Broker** | Redis |
+| **Task Queue** | Celery |
+| **Infrastructure** | Docker, Docker Compose |
+| **Documentation** | drf-spectacular (Swagger / OpenAPI) |
+| **Testing / Seeding** | Faker |
 
 ---
 
-# Project Structure
+## Architecture
+
+```mermaid
+flowchart LR
+    Client --> Django
+    Django --> PostgreSQL
+    Django --> Redis
+    Django --> Celery
+    Celery --> Redis
+    Celery --> BackgroundTasks
+```
+
+| Service | Role |
+|---------|------|
+| **Django Web Server** | REST API and request handling |
+| **PostgreSQL** | Primary relational data store |
+| **Redis** | Response caching and Celery message broker |
+| **Celery Worker** | Asynchronous background task execution |
+
+---
+
+## Project Structure
 
 ```text
-project/
-│
+aforro/
 ├── apps/
-│   ├── products/
-│   ├── stores/
-│   ├── orders/
-│   └── search/
-│
-├── tests/
-│
-├── aforro/
-│
+│   ├── products/          # Product and category models, seed command
+│   ├── stores/            # Store and inventory management
+│   ├── orders/            # Order processing, services, Celery tasks
+│   └── search/            # Product search and autocomplete
+├── tests/                 # Integration tests
+├── aforro/                # Django project settings, URLs, Celery config
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
 ├── manage.py
-└── README.md
+└── readme.md
 ```
 
 ---
 
-# Setup Instructions
+## Quick Start
 
-## 1. Clone Repository
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
+- Git
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/NikhilAmbure/Aforro_backend
+cd Aforro_backend
 ```
 
----
+### 2. Configure environment variables
 
-## 2. Configure Environment Variables
-
-Create a `.env` file in the project root.
-
-Example:
+Create a `.env` file in the project root:
 
 ```env
 SECRET_KEY=your-secret-key
-
 DEBUG=True
 
 DB_NAME=aforro
@@ -92,25 +121,19 @@ DB_PORT=5432
 REDIS_URL=redis://redis:6379/0
 ```
 
----
-
-## 3. Build Docker Containers
+### 3. Build and start services
 
 ```bash
 docker compose up --build
 ```
 
----
-
-## 4. Apply Database Migrations
+### 4. Apply database migrations
 
 ```bash
 docker compose exec web python manage.py migrate
 ```
 
----
-
-## 5. Generate Dummy Data
+### 5. Seed dummy data
 
 ```bash
 docker compose exec web python manage.py seed_data
@@ -118,245 +141,191 @@ docker compose exec web python manage.py seed_data
 
 The seed command generates:
 
-- 10+ Categories
-- 1000+ Products
-- 20+ Stores
-- Inventory for every store
+- 10+ categories
+- 1000+ products
+- 20+ stores
+- Inventory records for every store
+
+### 6. Access the API
+
+| Resource | URL |
+|----------|-----|
+| API base | `http://localhost:8000/api/` |
+| Swagger UI | `http://localhost:8000/api/docs/` |
+| OpenAPI schema | `http://localhost:8000/api/schema/` |
 
 ---
 
-# Docker Usage
+## Docker
 
-Start all services
+### Common commands
 
-```bash
-docker compose up
-```
+| Action | Command |
+|--------|---------|
+| Start all services | `docker compose up` |
+| Start with rebuild | `docker compose up --build` |
+| Stop containers | `docker compose down` |
 
-Stop containers
+### Services
 
-```bash
-docker compose down
-```
+Docker Compose starts four services:
 
-Rebuild containers
-
-```bash
-docker compose up --build
-```
-
----
-
-# Docker Services
-
-Docker Compose starts the following services:
-
-- Django Web Server
-- PostgreSQL Database
-- Redis
-- Celery Worker
+| Service | Description |
+|---------|-------------|
+| `web` | Django development server on port 8000 |
+| `db` | PostgreSQL 16 |
+| `redis` | Redis 7 |
+| `celery` | Celery worker for background tasks |
 
 ---
 
-# Running Tests
+## API Reference
 
-```bash
-docker compose exec web python manage.py test
-```
+### Orders
 
-Implemented Tests
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/orders/` | Create a new order |
+| `GET` | `/api/orders/` | List orders |
 
-- Order Creation (Confirmed)
-- Order Creation (Rejected)
-- Inventory API
-- Product Search API
-- Product Suggestion API
+### Stores
 
----
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/stores/<store_id>/inventory/` | Get inventory for a store |
 
-# Swagger / OpenAPI Documentation
+### Search
 
-Swagger UI
-
-```
-http://localhost:8000/api/docs/
-```
-
-OpenAPI Schema
-
-```
-http://localhost:8000/api/schema/
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/search/products/` | Search products with optional filters |
+| `GET` | `/api/search/suggest/` | Autocomplete product suggestions |
 
 ---
 
-# API Endpoints
+## Usage Examples
 
-## Orders
+### Create an order
 
-| Method | Endpoint |
-|---------|----------|
-| POST | `/api/orders/` |
-| GET | `/api/orders/` |
-
----
-
-## Stores
-
-| Method | Endpoint |
-|---------|----------|
-| GET | `/api/stores/<store_id>/inventory/` |
-
----
-
-## Search
-
-| Method | Endpoint |
-|---------|----------|
-| GET | `/api/search/products/` |
-| GET | `/api/search/suggest/` |
-
----
-
-# Sample API Requests
-
-## Create Order
-
-**POST**
-
-```
-/api/orders/
-```
-
-Request Body
+**POST** `/api/orders/`
 
 ```json
 {
-    "store_id": 1,
-    "items": [
-        {
-            "product_id": 10,
-            "quantity_requested": 2
-        },
-        {
-            "product_id": 15,
-            "quantity_requested": 1
-        }
-    ]
+  "store_id": 1,
+  "items": [
+    {
+      "product_id": 10,
+      "quantity_requested": 2
+    },
+    {
+      "product_id": 15,
+      "quantity_requested": 1
+    }
+  ]
 }
 ```
 
----
+### Search products
 
-## Product Search
-
-```
+```http
 GET /api/search/products/?q=laptop
 ```
 
----
+### Search with filters
 
-## Product Search with Filters
-
-```
+```http
 GET /api/search/products/?category=Electronics&min_price=1000&max_price=50000
 ```
 
----
+### Product suggestions
 
-## Product Suggestions
-
-```
+```http
 GET /api/search/suggest/?q=lap
 ```
 
----
+### Store inventory
 
-## Store Inventory
-
-```
+```http
 GET /api/stores/1/inventory/
 ```
 
 ---
 
-# Redis Caching
+## Redis Caching
 
-Redis is used to cache frequently requested API responses.
+Redis caches frequently requested API responses to reduce database load and improve response times.
 
-Currently cached endpoints include:
-
-- Product Search API
-- Product Suggestion API
-
-Cached responses are stored for **5 minutes**, reducing repeated database queries and improving response time for frequently accessed data.
+| Endpoint | TTL |
+|----------|-----|
+| Product Search (`/api/search/products/`) | 5 minutes |
+| Product Suggestions (`/api/search/suggest/`) | 5 minutes |
 
 ---
 
-# Celery Background Tasks
+## Celery Background Tasks
 
-Celery is integrated for asynchronous processing.
+Celery handles long-running work outside the HTTP request cycle so API responses stay fast.
 
-Current implementation:
+**Current implementation:** order confirmation runs asynchronously after a successful order is created.
 
-- Order confirmation task is executed asynchronously after a successful order is created.
-
-Workflow
-
-```
-Client
-   │
-   ▼
-Django API
-   │
-   ▼
-Redis Broker
-   │
-   ▼
-Celery Worker
-   │
-   ▼
-Background Task
+```mermaid
+flowchart TD
+    Client --> DjangoAPI
+    DjangoAPI --> RedisBroker
+    RedisBroker --> CeleryWorker
+    CeleryWorker --> BackgroundTask
 ```
 
-Using Celery ensures that long-running operations do not block API responses.
+---
+
+## Design Decisions
+
+- **Service layer** — Business logic lives outside views in dedicated service modules.
+- **Atomic transactions** — Order creation uses `transaction.atomic()` for consistency.
+- **Inventory locking** — `select_for_update()` prevents race conditions during concurrent orders.
+- **Atomic updates** — Django `F()` expressions for safe inventory decrement.
+- **Caching** — Redis reduces repeated queries on high-traffic search endpoints.
+- **Async processing** — Celery offloads post-order work from the request thread.
+- **Modular apps** — Separate Django apps for products, stores, orders, and search.
+- **Auto-generated docs** — drf-spectacular provides always-up-to-date OpenAPI specs.
+- **Reproducible environment** — Docker Compose standardizes local development.
 
 ---
 
-# Design Decisions
+## Scalability Considerations
 
-Some key design decisions include:
+The architecture supports growth through:
 
-- Business logic separated into a dedicated Service Layer.
-- Transaction-safe order creation using `transaction.atomic()`.
-- Inventory locking using `select_for_update()` to prevent race conditions.
-- Atomic inventory updates using Django `F()` expressions.
-- Redis caching to improve API performance.
-- Celery for asynchronous task execution.
-- Modular Django app architecture.
-- Automatic API documentation with drf-spectacular.
-- Dockerized environment for consistent development.
+- **Modular structure** — Independent apps simplify parallel development and deployment.
+- **Redis caching** — Offloads read-heavy search traffic from PostgreSQL.
+- **Celery workers** — Background tasks scale horizontally without blocking HTTP requests.
+- **Transactional integrity** — Database transactions and row-level locking prevent overselling under concurrency.
+- **Containerized deployment** — Docker enables consistent environments from dev to production.
+- **PostgreSQL** — Production-ready relational backend with strong consistency guarantees.
+- **Future extensions** — Multiple Celery workers, load balancing, and distributed caching can be added for higher traffic.
 
 ---
 
-# Scalability Considerations
+## Testing
 
-The project has been designed with scalability in mind.
+Run the full test suite inside the web container:
 
-- Modular application structure makes future development easier.
-- Redis caching reduces database load for frequently requested endpoints.
-- Celery allows background task processing without blocking HTTP requests.
-- Database transactions guarantee consistency during concurrent order creation.
-- Inventory locking prevents overselling in concurrent environments.
-- Docker provides reproducible deployment across environments.
-- PostgreSQL offers a production-ready relational database backend.
-- The architecture can be extended with multiple Celery workers, load balancing, and distributed caching for higher traffic scenarios.
+```bash
+docker compose exec web python manage.py test
+```
+
+### Test coverage
+
+| Test | Validates |
+|------|-----------|
+| Order creation (confirmed) | Successful order flow with stock deduction |
+| Order creation (rejected) | Insufficient inventory handling |
+| Inventory API | Store inventory retrieval |
+| Product search API | Search and filter behavior |
+| Product suggestion API | Autocomplete responses |
 
 ---
 
-# Author
+## Author
 
-**Nikhil Ambure**
-
-Backend Developer
-````
+**Nikhil Ambure** — Backend Developer
