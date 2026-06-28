@@ -1,3 +1,4 @@
+from .tasks import send_order_confirmation
 from django.db import transaction
 from django.db.models import F
 
@@ -10,7 +11,6 @@ def create_order(validated_data):
     store = validated_data["store"]
     items = validated_data["items"]
 
-    inventory_records = {}
     stock_available = True
 
     # Validating inventory
@@ -19,13 +19,11 @@ def create_order(validated_data):
         quantity_requested = item["quantity_requested"]
 
         try: 
-            # ---> This locks the inventory row while the transaction is running. --> select_for_update()
+            
             inventory = Inventory.objects.select_for_update().get( 
                 store = store, 
                 product = product
             )
-
-            inventory_records[product] = inventory
 
             if inventory.quantity < quantity_requested:
                 stock_available = False 
@@ -42,6 +40,11 @@ def create_order(validated_data):
             else Order.StatusChoices.REJECTED
         ),
     )
+
+    if stock_available:
+        transaction.on_commit(
+            lambda: send_order_confirmation.delay(order.id)
+        )
 
     # Create OrderItems and deduct stock if confirmed
     for item in items:

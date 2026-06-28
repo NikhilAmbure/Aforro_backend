@@ -27,6 +27,7 @@ class ProductSearchAPIView(ListAPIView):
         query = self.request.query_params.get("q")
 
         if query:
+            # Relevance scoring
             queryset = queryset.filter(
                 Q(title__icontains=query)
                 | Q(description__icontains=query)
@@ -93,6 +94,9 @@ class ProductSearchAPIView(ListAPIView):
         elif sort == "relevance":
             if query:
                 queryset = queryset.order_by("-relevance", "title")    
+
+        if not sort: 
+            queryset = queryset.order_by("title")
 
         return queryset.distinct()
     
