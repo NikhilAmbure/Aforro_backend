@@ -12,6 +12,9 @@ from apps.products.models import Product
 from .serializers import ProductSearchSerializer, ProductSuggestionSerializer
 from rest_framework.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema
+from django.core.cache import cache
+from rest_framework.response import Response
+from django.conf import settings
 
 @extend_schema(
     summary="Search Products",
@@ -100,6 +103,20 @@ class ProductSearchAPIView(ListAPIView):
 
         return queryset.distinct()
     
+    def list(self, request, *args, **kwargs):
+
+        cache_key = f"product_search:{request.get_full_path()}"
+        cached_response = cache.get(cache_key)
+
+        if cached_response:
+            return Response(cached_response)
+
+        response = super().list(request, *args, **kwargs)
+
+        cache.set(cache_key, response.data, timeout=settings.CACHE_TIMEOUT)
+
+        return response
+    
 
 class ProductSuggestionAPIView(ListAPIView):
     serializer_class = ProductSuggestionSerializer
@@ -126,3 +143,17 @@ class ProductSuggestionAPIView(ListAPIView):
             )
             .order_by("priority", "title")[:10]
         )
+    
+    def list(self, request, *args, **kwargs):
+
+        cache_key = f"product_suggestions:{request.get_full_path()}"
+        cached_response = cache.get(cache_key)
+
+        if cached_response:
+            return Response(cached_response)
+
+        response = super().list(request, *args, **kwargs)
+
+        cache.set(cache_key, response.data, timeout=settings.CACHE_TIMEOUT)
+
+        return response
