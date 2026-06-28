@@ -11,8 +11,12 @@ from rest_framework.generics import ListAPIView
 from apps.products.models import Product
 from .serializers import ProductSearchSerializer, ProductSuggestionSerializer
 from rest_framework.exceptions import ValidationError
+from drf_spectacular.utils import extend_schema
 
-
+@extend_schema(
+    summary="Search Products",
+    description="Search products using keyword, category, price range, store, and stock filters.",
+)
 class ProductSearchAPIView(ListAPIView):
     serializer_class = ProductSearchSerializer
 

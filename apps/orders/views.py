@@ -8,6 +8,12 @@ from .services import create_order
 from django.db.models import Count
 from .models import Order
 
+from drf_spectacular.utils import extend_schema
+
+@extend_schema(
+    summary="Create a new order",
+    description="Creates an order and automatically confirms or rejects it based on inventory availability.",
+)
 class OrderCreateAPIView(CreateAPIView):
     serializer_class = OrderCreateSerializer
 

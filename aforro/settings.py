@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    "drf_spectacular",
 
     # apps
     "apps.products",
@@ -123,8 +124,16 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Pagination
+# Pagination, Swagger and OpenAPI settings
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Aforro Store Management API",
+    "DESCRIPTION": "Round 2 Backend Assignment",
+    "VERSION": "1.0.0",
 }
